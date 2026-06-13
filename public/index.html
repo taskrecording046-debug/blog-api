@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog API — Posts</title>
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --surface: #ffffff;
+      --ink: #1c2733;
+      --ink-soft: #5b6b7b;
+      --line: #dde3e9;
+      --accent: #2563eb;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+    .head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+    .eyebrow { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.14em; color: var(--ink-soft); }
+    h1 { margin: 0; font-size: 26px; }
+    button {
+      padding: 9px 18px; border: none; border-radius: 6px;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .timing {
+      margin: 0 0 18px; padding: 10px 14px; background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--radius);
+      font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+    }
+    .timing b { color: var(--ink); }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    li {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 12px 14px;
+    }
+    .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .meta { font-size: 12px; color: var(--ink-soft); display: flex; gap: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <p class="eyebrow">BLOG API · INTERNAL</p>
+        <h1>Latest posts</h1>
+      </div>
+      <button id="load">Load posts</button>
+    </div>
+
+    <p class="timing" id="timing" hidden></p>
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+    const btn = document.getElementById("load");
+    const timing = document.getElementById("timing");
+    const list = document.getElementById("list");
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      timing.hidden = false;
+      timing.textContent = "Loading…";
+      list.innerHTML = "";
+
+      const clientStart = performance.now();
+      try {
+        const res = await fetch("/api/posts");
+        const data = await res.json();
+        const clientMs = Math.round(performance.now() - clientStart);
+
+        timing.innerHTML =
+          `Loaded <b>${data.count}</b> posts · ` +
+          `server <b>${data.tookMs} ms</b> · round-trip <b>${clientMs} ms</b>`;
+
+        list.innerHTML = data.posts
+          .map(
+            (p) => `
+            <li>
+              <div class="title">${p.title}</div>
+              <div class="meta">
+                <span>by ${p.author.name}</span>
+                <span>${p.commentCount} comments</span>
+              </div>
+            </li>`
+          )
+          .join("");
+      } catch (err) {
+        timing.textContent = "Request failed: " + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
