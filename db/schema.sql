@@ -27,6 +27,9 @@ CREATE TABLE comments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- An index on the foreign keys, as you'd have in any real schema.
+-- Indexes on the foreign keys, as you'd have in any real schema.
 CREATE INDEX idx_posts_author_id ON posts(author_id);
 CREATE INDEX idx_comments_post_id ON comments(post_id);
+
+-- NOTE: authors.email is deliberately left WITHOUT an index here.
+-- The missing-index tutorial adds it via db/add-email-index.sql.

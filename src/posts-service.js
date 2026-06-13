@@ -1,21 +1,27 @@
+// Stable baseline: list posts with author + comment count in one query.
+// (This is the resolved version from the N+1 tutorial.)
+
 const { pool } = require("./db");
 
 async function listPostsWithDetails(limit = 200) {
   const { rows } = await pool.query(
     `SELECT
-      p.id, p.title, p.published_at,
-      a.id   AS author_id,
-      a.name AS author_name,
-      a.email AS author_email,
-      COALESCE(c.cnt, 0) AS comment_count
-    FROM posts p
-    JOIN authors a ON a.id = p.author_id
-    LEFT JOIN (
-      SELECT post_id, COUNT(*)::int AS cnt
-        FROM comments GROUP BY post_id
-    ) c ON c.post_id = p.id
-    ORDER BY p.published_at DESC
-    LIMIT $1`,
+        p.id,
+        p.title,
+        p.published_at,
+        a.id            AS author_id,
+        a.name          AS author_name,
+        a.email         AS author_email,
+        COALESCE(c.cnt, 0) AS comment_count
+      FROM posts p
+      JOIN authors a ON a.id = p.author_id
+      LEFT JOIN (
+        SELECT post_id, COUNT(*)::int AS cnt
+          FROM comments
+         GROUP BY post_id
+      ) c ON c.post_id = p.id
+      ORDER BY p.published_at DESC
+      LIMIT $1`,
     [limit]
   );
 
@@ -23,7 +29,11 @@ async function listPostsWithDetails(limit = 200) {
     id: row.id,
     title: row.title,
     publishedAt: row.published_at,
-    autho: { id: row.author_id, name: row.author_name, email: row.author_email },
+    author: {
+      id: row.author_id,
+      name: row.author_name,
+      email: row.author_email,
+    },
     commentCount: row.comment_count,
   }));
 }
